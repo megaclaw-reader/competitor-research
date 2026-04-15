@@ -96,7 +96,9 @@ const INDUSTRIES: [string, RegExp[], string[]][] = [
     ["doctor", "medical clinic", "healthcare provider"]],
   ["home services", [/home\s*(?:service|repair|improvement)/i, /handyman/i, /garage\s*door/i, /window\s*(?:install|replace)/i, /siding/i],
     ["home services", "handyman", "home improvement"]],
-  ["entertainment", [/entertain/i, /event\s*(?:venue|space|planning)/i, /ticket/i, /show/i, /attraction/i, /haunted/i, /amusement/i, /bowling/i, /arcade/i, /escape\s*room/i],
+  ["event planning", [/event\s*(?:plan|design|produc|decor|coordin|styl)/i, /wedding\s*(?:plan|design|coordin|decor)/i, /celebration/i, /brand\s*(?:experience|activation)/i, /corporate\s*event/i, /party\s*(?:plan|rent|decor)/i, /floral\s*(?:design|arrang)/i, /balloon/i, /globo/i, /luxury\s*event/i, /event\s*(?:rental|vendor|florist)/i],
+    ["event planner", "event design", "wedding planner", "event decorator"]],
+  ["entertainment", [/entertain/i, /event\s*(?:venue|space|center)/i, /ticket/i, /show/i, /attraction/i, /haunted/i, /amusement/i, /bowling/i, /arcade/i, /escape\s*room/i],
     ["entertainment venue", "event space", "attraction"]],
   ["education", [/school/i, /tutor/i, /learn/i, /educat/i, /training\s*(?:center|program)/i, /course/i, /academ/i],
     ["school", "tutoring service", "education center"]],
@@ -178,6 +180,21 @@ function generateSearchQueries(
     }
   }
 
+  // If we ended up with "general business" or very few queries, extract from actual site content
+  if (industry === "general business" || queries.length < 4) {
+    const desc = signals.metaDescription.toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim();
+    const h1Text = signals.h1s.map(h => h.toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim()).filter(h => h.length > 5);
+    const titleClean = signals.title.toLowerCase()
+      .replace(/[|–—\-:]/g, " ").replace(signals.domain, "").replace(/\.com|\.net|\.org/gi, "").trim();
+    
+    // Use descriptive content as queries, with location if available
+    const contentQueries = [titleClean, ...h1Text, desc].filter(q => q.length > 5 && q.length < 80);
+    const loc = location ? ` ${location.city}` : "";
+    for (const cq of contentQueries.slice(0, 4)) {
+      queries.push(cq + loc);
+    }
+  }
+
   const seen = new Set<string>();
   return queries
     .map((q) => q.toLowerCase().trim())
@@ -197,7 +214,7 @@ const INHERENTLY_LOCAL = new Set([
   "family law", "immigration law", "legal", "plumbing", "hvac", "roofing",
   "electrical", "pest control", "landscaping", "cleaning", "moving", "auto repair",
   "auto dealership", "real estate", "restaurant", "construction", "fitness",
-  "insurance", "accounting", "medical practice", "home services",
+  "insurance", "accounting", "medical practice", "home services", "event planning",
 ]);
 
 export function analyzeSite(signals: SiteSignals): SiteAnalysis {
