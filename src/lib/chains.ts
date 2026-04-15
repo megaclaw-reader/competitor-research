@@ -18,7 +18,24 @@ const NATIONAL_CHAINS = new Set([
   // Legal directories
   "avvo.com", "justia.com", "findlaw.com", "martindale.com", "lawyers.com", "nolo.com",
   // Medical directories
-  "zocdoc.com", "healthgrades.com", "vitals.com", "webmd.com",
+  "zocdoc.com", "healthgrades.com", "vitals.com", "webmd.com", "realself.com",
+  // Beauty/wellness directories
+  "vagaro.com", "fresha.com", "booksy.com", "mindbodyonline.com", "mindbody.io",
+  "salonlist.com", "treatwell.com", "styleseat.com", "genbook.com", "squareup.com",
+  // Business listing/sale sites
+  "bizbuysell.com", "loopnet.com", "craigslist.org", "businessbroker.net",
+  "franchisegator.com", "smallbiztrends.com", "nerdwallet.com", "forbes.com",
+  "businessnewsdaily.com", "investopedia.com", "thebalancemoney.com",
+  // News/media
+  "cnn.com", "nytimes.com", "wsj.com", "usatoday.com", "bbc.com",
+  // General knowledge
+  "quora.com", "wikihow.com", "medium.com", "healthline.com", "mayoclinic.org",
+  "clevelandclinic.org", "plasticsurgery.org", "americanboardcosmeticsurgery.org",
+  "aad.org", "ada.org", "ama-assn.org",
+  // News/local media
+  "sfgate.com", "patch.com",
+  // Booking aggregators
+  "groupon.com", "livingsocial.com",
   // Real estate portals
   "zillow.com", "realtor.com", "redfin.com", "trulia.com",
   // Insurance
