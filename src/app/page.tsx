@@ -13,6 +13,8 @@ interface Competitor {
   inMapsPack: boolean;
   mapsRating?: number;
   mapsReviews?: number;
+  indexedPages: number;
+  trafficScore: number;
 }
 
 interface TargetInfo {
@@ -146,7 +148,7 @@ export default function Home() {
           ) : (
             <div className="space-y-3">
               <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">
-                Top Competitors ({result.competitors.length})
+                Top Competitors ({result.competitors.length}) — sorted by estimated traffic
               </h2>
               {result.competitors.map((comp, i) => (
                 <div
@@ -185,7 +187,12 @@ export default function Home() {
                         {comp.keywordOverlap}/{comp.totalQueries} keywords
                       </div>
                       <div className="text-xs text-gray-500">
-                        best pos: #{comp.bestPosition}
+                        {comp.indexedPages > 0
+                          ? `${comp.indexedPages.toLocaleString()} pages indexed`
+                          : `best pos: #${comp.bestPosition}`}
+                      </div>
+                      <div className="text-xs font-mono text-gray-600 mt-0.5">
+                        traffic: {comp.trafficScore > 0 ? comp.trafficScore : "—"}
                       </div>
                     </div>
                   </div>

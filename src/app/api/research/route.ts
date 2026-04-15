@@ -20,6 +20,8 @@ interface CompetitorScore {
   mapsRating?: number;
   mapsReviews?: number;
   totalScore: number;
+  indexedPages?: number;
+  trafficScore?: number;
 }
 
 function scoreCompetitors(
@@ -187,6 +189,45 @@ export async function POST(request: NextRequest) {
 
     const competitors = scoreCompetitors(searchResults, signals.domain, analysis.businessType);
 
+    // Enrich with indexed page counts for traffic estimation
+    const enrichBatch = 4;
+    for (let i = 0; i < competitors.length; i += enrichBatch) {
+      const batch = competitors.slice(i, i + enrichBatch);
+      await Promise.all(
+        batch.map(async (comp) => {
+          try {
+            const res = await fetch("https://google.serper.dev/search", {
+              method: "POST",
+              headers: { "X-API-KEY": apiKey!, "Content-Type": "application/json" },
+              body: JSON.stringify({ q: `site:${comp.domain}`, num: 1 }),
+              signal: AbortSignal.timeout(5000),
+            });
+            const data = await res.json();
+            // Serper returns searchInformation.totalResults
+            const totalStr = data.searchInformation?.totalResults;
+            comp.indexedPages = totalStr ? parseInt(totalStr, 10) : 0;
+          } catch {
+            comp.indexedPages = 0;
+          }
+        })
+      );
+    }
+
+    // Calculate estimated traffic score and re-sort
+    for (const comp of competitors) {
+      // Traffic proxy: indexed pages × avg position quality × keyword presence
+      const pages = comp.indexedPages || 1;
+      const posQuality = Math.max(0.1, (20 - comp.avgPosition) / 20); // 0-1, higher = better positions
+      const kwCoverage = comp.queriesFound.length / analysis.searchQueries.length;
+      const mapsBoost = comp.inMapsPack ? 1.5 : 1;
+      
+      // Log scale for pages since 10K pages vs 100 pages is meaningful but 100K vs 90K less so
+      comp.trafficScore = Math.round(Math.log10(Math.max(pages, 1)) * posQuality * kwCoverage * mapsBoost * 1000);
+    }
+
+    // Re-sort by traffic score
+    competitors.sort((a, b) => (b.trafficScore || 0) - (a.trafficScore || 0));
+
     const results = competitors.map((comp) => ({
       domain: comp.domain,
       url: comp.url,
@@ -198,6 +239,8 @@ export async function POST(request: NextRequest) {
       inMapsPack: comp.inMapsPack,
       mapsRating: comp.mapsRating,
       mapsReviews: comp.mapsReviews,
+      indexedPages: comp.indexedPages || 0,
+      trafficScore: comp.trafficScore || 0,
     }));
 
     return NextResponse.json({
