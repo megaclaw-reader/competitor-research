@@ -36,6 +36,15 @@ const NATIONAL_CHAINS = new Set([
   "sfgate.com", "patch.com",
   // Booking aggregators
   "groupon.com", "livingsocial.com",
+  // Wedding/event directories
+  "weddingwire.com", "theknot.com", "zola.com", "junebugweddings.com",
+  "stylemepretty.com", "brides.com", "marthastewartweddings.com",
+  "partyslate.com", "eventective.com", "gigsalad.com", "bark.com",
+  "eventbrite.com", "peerspace.com", "tagvenue.com", "venuecrew.com",
+  "bizbash.com", "socialtables.com", "cvent.com",
+  // B2B directories & listicle sites
+  "goodfirms.co", "clutch.co", "g2.com", "capterra.com", "softwareadvice.com",
+  "expertise.com", "therealreview.com", "birdeye.com",
   // Real estate portals
   "zillow.com", "realtor.com", "redfin.com", "trulia.com",
   // Insurance

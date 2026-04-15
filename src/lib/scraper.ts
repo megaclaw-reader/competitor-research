@@ -95,14 +95,14 @@ function extractLocation(
     return { city: m[1].trim(), state: m[2], zip: m[3], addressText: m[0] };
   }
 
-  // Try city, state without zip
+  // Try city, state without zip (case-insensitive for state)
   const cityStateRe = new RegExp(
     `([A-Z][a-zA-Z\\s]{2,20}),\\s*(${stateAbbrs})\\b`,
-    "g"
+    "gi"
   );
   const m2 = cityStateRe.exec(html.replace(/<[^>]+>/g, " "));
   if (m2) {
-    return { city: m2[1].trim(), state: m2[2], zip: null, addressText: m2[0] };
+    return { city: m2[1].trim(), state: m2[2].toUpperCase(), zip: null, addressText: m2[0] };
   }
 
   return { city: null, state: null, zip: null, addressText: null };
