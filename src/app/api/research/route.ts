@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
 
     const competitors = scoreCompetitors(searchResults, signals.domain, analysis.businessType);
 
-    // Enrich with indexed page counts for traffic estimation
+    // Enrich: count indexed pages via site: search (Serper returns organic results, count them)
     const enrichBatch = 4;
     for (let i = 0; i < competitors.length; i += enrichBatch) {
       const batch = competitors.slice(i, i + enrichBatch);
@@ -199,13 +199,12 @@ export async function POST(request: NextRequest) {
             const res = await fetch("https://google.serper.dev/search", {
               method: "POST",
               headers: { "X-API-KEY": apiKey!, "Content-Type": "application/json" },
-              body: JSON.stringify({ q: `site:${comp.domain}`, num: 1 }),
+              body: JSON.stringify({ q: `site:${comp.domain}`, num: 100 }),
               signal: AbortSignal.timeout(5000),
             });
             const data = await res.json();
-            // Serper returns searchInformation.totalResults
-            const totalStr = data.searchInformation?.totalResults;
-            comp.indexedPages = totalStr ? parseInt(totalStr, 10) : 0;
+            comp.indexedPages = data.organic?.length || 0;
+            // If we got 100, there's likely more — flag as 100+
           } catch {
             comp.indexedPages = 0;
           }
@@ -213,19 +212,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate estimated traffic score and re-sort
+    // Calculate traffic score and re-sort
     for (const comp of competitors) {
-      // Traffic proxy: indexed pages × avg position quality × keyword presence
-      const pages = comp.indexedPages || 1;
-      const posQuality = Math.max(0.1, (20 - comp.avgPosition) / 20); // 0-1, higher = better positions
+      const pages = Math.max(comp.indexedPages || 1, 1);
+      const posQuality = Math.max(0.1, (20 - comp.avgPosition) / 20);
       const kwCoverage = comp.queriesFound.length / analysis.searchQueries.length;
       const mapsBoost = comp.inMapsPack ? 1.5 : 1;
-      
-      // Log scale for pages since 10K pages vs 100 pages is meaningful but 100K vs 90K less so
-      comp.trafficScore = Math.round(Math.log10(Math.max(pages, 1)) * posQuality * kwCoverage * mapsBoost * 1000);
+      const reviewBoost = comp.mapsReviews ? Math.min(Math.log10(comp.mapsReviews) / 3, 1.5) : 1;
+
+      // Score: pages × position quality × keyword coverage × maps presence × reviews
+      comp.trafficScore = Math.round(pages * posQuality * kwCoverage * mapsBoost * reviewBoost * 10);
     }
 
-    // Re-sort by traffic score
     competitors.sort((a, b) => (b.trafficScore || 0) - (a.trafficScore || 0));
 
     const results = competitors.map((comp) => ({
