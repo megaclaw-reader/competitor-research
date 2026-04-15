@@ -189,22 +189,39 @@ export async function POST(request: NextRequest) {
 
     const competitors = scoreCompetitors(searchResults, signals.domain, analysis.businessType);
 
-    // Enrich: count indexed pages via site: search (Serper returns organic results, count them)
+    // Enrich: estimate indexed pages via site: searches
     const enrichBatch = 4;
     for (let i = 0; i < competitors.length; i += enrichBatch) {
       const batch = competitors.slice(i, i + enrichBatch);
       await Promise.all(
         batch.map(async (comp) => {
           try {
-            const res = await fetch("https://google.serper.dev/search", {
-              method: "POST",
-              headers: { "X-API-KEY": apiKey!, "Content-Type": "application/json" },
-              body: JSON.stringify({ q: `site:${comp.domain}`, num: 100 }),
-              signal: AbortSignal.timeout(5000),
-            });
-            const data = await res.json();
-            comp.indexedPages = data.organic?.length || 0;
-            // If we got 100, there's likely more — flag as 100+
+            // Check page 1 (results 1-10) and page 10 (results 91-100)
+            const [p1, p10] = await Promise.all([
+              fetch("https://google.serper.dev/search", {
+                method: "POST",
+                headers: { "X-API-KEY": apiKey!, "Content-Type": "application/json" },
+                body: JSON.stringify({ q: `site:${comp.domain}`, num: 10, page: 1 }),
+                signal: AbortSignal.timeout(5000),
+              }).then(r => r.json()).catch(() => ({})),
+              fetch("https://google.serper.dev/search", {
+                method: "POST",
+                headers: { "X-API-KEY": apiKey!, "Content-Type": "application/json" },
+                body: JSON.stringify({ q: `site:${comp.domain}`, num: 10, page: 10 }),
+                signal: AbortSignal.timeout(5000),
+              }).then(r => r.json()).catch(() => ({})),
+            ]);
+
+            const p1Count = p1.organic?.length || 0;
+            const p10Count = p10.organic?.length || 0;
+
+            if (p10Count > 0) {
+              comp.indexedPages = 100; // 100+ pages (page 10 still has results)
+            } else if (p1Count >= 10) {
+              comp.indexedPages = 50; // Between 10-100 pages
+            } else {
+              comp.indexedPages = p1Count; // Small site
+            }
           } catch {
             comp.indexedPages = 0;
           }

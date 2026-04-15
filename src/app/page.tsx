@@ -187,8 +187,10 @@ export default function Home() {
                         {comp.keywordOverlap}/{comp.totalQueries} keywords
                       </div>
                       <div className="text-xs text-gray-500">
-                        {comp.indexedPages > 0
-                          ? `${comp.indexedPages.toLocaleString()} pages indexed`
+                        {comp.indexedPages >= 100
+                          ? "100+ pages indexed"
+                          : comp.indexedPages > 0
+                          ? `~${comp.indexedPages} pages indexed`
                           : `best pos: #${comp.bestPosition}`}
                       </div>
                       <div className="text-xs font-mono text-gray-600 mt-0.5">
