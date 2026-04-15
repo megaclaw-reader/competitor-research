@@ -113,7 +113,11 @@ function detectEcom(html: string): boolean {
     /add.to.cart/i, /shopping.cart/i, /checkout/i, /shopify/i,
     /woocommerce/i, /bigcommerce/i, /product-price/i, /buy.now/i,
     /"@type"\s*:\s*"Product"/i, /data-product/i, /cart-count/i,
-    /shop\.app/i, /snipcart/i,
+    /shop\.app/i, /snipcart/i, /shopify\.com/i,
+    /free.shipping/i, /add.to.bag/i, /shop.now/i, /shop.all/i,
+    /product-card/i, /product-grid/i, /collection/i,
+    /cart\.js/i, /\/cart\b/i, /\/collections\//i, /\/products\//i,
+    /data-shopify/i, /cdn\.shopify/i,
   ];
   return signals.filter((r) => r.test(html)).length >= 2;
 }

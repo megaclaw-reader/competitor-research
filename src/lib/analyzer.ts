@@ -86,7 +86,7 @@ const INDUSTRIES: [string, RegExp[], string[]][] = [
     ["general contractor", "construction company", "home remodeling"]],
   ["fitness", [/\bgym\b/i, /fitness\s*(?:center|studio|club)/i, /personal\s*train/i, /crossfit/i, /yoga\s*studio/i, /pilates/i],
     ["gym", "fitness center", "personal trainer"]],
-  ["insurance", [/insurance\s*(?:agent|agency|company|broker)/i, /coverage/i, /policy/i, /claim/i],
+  ["insurance", [/insurance\s*(?:agent|agency|company|broker|quote|premium|plan)/i, /(?:auto|home|life|health|car|renters)\s*insurance/i, /insurance\s*(?:coverage|policy|claim)/i, /deductible/i, /underwrit/i],
     ["insurance agent", "insurance company"]],
   ["accounting", [/account(?:ing|ant)/i, /tax\s*(?:prep|service|return)/i, /bookkeep/i, /\bcpa\b/i],
     ["accountant", "CPA", "tax preparation"]],
@@ -108,8 +108,8 @@ const INDUSTRIES: [string, RegExp[], string[]][] = [
     ["mortgage broker", "mortgage lender", "home loan"]],
   ["technology", [/software/i, /\bsaas\b/i, /\bapp\b/i, /tech(?:nolog)/i, /\bit\s*service/i, /managed\s*(?:service|it)/i, /cybersecur/i],
     ["software company", "IT services", "tech company"]],
-  ["ecommerce", [/shop\s*(?:now|online|our)/i, /\bstore\b/i, /buy\s*online/i, /free\s*shipping/i, /add\s*to\s*cart/i, /product/i],
-    ["online store", "ecommerce"]],
+  ["ecommerce", [/shop\s*(?:now|online|our|all|the)/i, /\bonline\s*store\b/i, /buy\s*online/i, /free\s*shipping/i, /add\s*to\s*(?:cart|bag)/i, /product-card/i, /shopify/i, /\/collections\//i],
+    ["online store", "ecommerce", "shop"]],
 ];
 
 function inferIndustry(signals: SiteSignals): { industry: string; querySeeds: string[] } {
@@ -160,13 +160,26 @@ function generateSearchQueries(
       }
     }
   } else if (businessType === "ecommerce") {
-    for (const seed of querySeeds.slice(0, 3)) {
-      queries.push(`buy ${seed} online`);
+    // For ecom, use the actual product/brand terms from the site
+    const titleClean = signals.title.toLowerCase()
+      .replace(/[|–—\-:]/g, " ").replace(signals.domain, "").replace(/\.com|\.net|\.org/gi, "")
+      .replace(/official\s*site|home|shop|store|free shipping/gi, "").trim();
+    const h1Clean = signals.h1s.map(h => h.toLowerCase()).filter(h => h.length > 3 && h.length < 50);
+
+    // Use title/h1 content which usually describes what they sell
+    const productTerms = [titleClean, ...h1Clean].filter(t => t.length > 3).slice(0, 3);
+    for (const term of productTerms) {
+      queries.push(term);
+      queries.push(`${term} alternatives`);
+    }
+
+    // Also use industry seeds
+    for (const seed of querySeeds.slice(0, 2)) {
       queries.push(`best ${seed}`);
     }
-    queries.push(`${querySeeds[0]} store`);
-    queries.push(`top ${querySeeds[0]} brands`);
-    for (const svc of signals.serviceKeywords.slice(0, 3)) {
+    queries.push(`brands like ${signals.title.split(/[|–—\-:]/)[0]?.trim() || signals.domain}`);
+
+    for (const svc of signals.serviceKeywords.slice(0, 2)) {
       queries.push(`buy ${svc} online`);
     }
   } else {

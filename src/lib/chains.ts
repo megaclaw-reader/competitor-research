@@ -49,6 +49,8 @@ const NATIONAL_CHAINS = new Set([
   "zillow.com", "realtor.com", "redfin.com", "trulia.com",
   // Insurance
   "progressive.com", "geico.com", "statefarm.com", "allstate.com",
+  "deltadental.com", "metlife.com", "cigna.com", "aetna.com", "unitedhealth.com",
+  "humana.com", "anthem.com", "bcbs.com", "bluecrossblue.com",
   // Ecom marketplaces
   "ebay.com", "etsy.com", "aliexpress.com", "alibaba.com", "wish.com",
   // Big box / national
